@@ -1,7 +1,5 @@
-from django_abstract.selectors_exceptions import SelectorException
 from django_abstract.utilities import ClassInfoProvider
-from django_abstract.base_exception import CoreException
-from django_abstract.selectors_exceptions import CreatorException
+from django_abstract.base.base_exception import CoreException
 
 class UtilityException(CoreException):
     def __init__(
@@ -115,3 +113,45 @@ class SystemException(CoreException):
         context = None
     ):
         super().__init__(message, error_code, original_exception,  context)
+
+class ModelSystemException(CoreException):
+    def __init__(
+        self,
+        message: str = "A System error occurred",
+        error_code= None,
+        original_exception = None,
+        context = None
+    ):
+        super().__init__(message, error_code, original_exception,  context)
+
+class ModelServiceException(CoreException):
+    def __init__(
+        self,
+        message: str = "A System error occurred",
+        error_code= None,
+        original_exception = None,
+        context = None
+    ):
+        super().__init__(message, error_code, original_exception,  context)
+
+class ModelNotBindedException(CoreException):
+    def __init__(
+        self,
+        message: str = "A System error occurred",
+        error_code= None,
+        original_exception = None,
+        context = None
+    ):
+        super().__init__(message, error_code, original_exception,  context)
+
+
+class RegistryException(CoreException):
+    def __init__(
+        self,
+        message: str = "A System error occurred",
+        error_code= None,
+        original_exception = None,
+        context = None
+    ):
+        super().__init__(message, error_code, original_exception,  context)
+

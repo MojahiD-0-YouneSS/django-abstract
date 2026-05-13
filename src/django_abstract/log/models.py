@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
-from django_abstract.base_model import BaseModel  # Assuming internal reference
+from django_abstract.base.base_model import BaseModel  # Assuming internal reference
 from django_abstract.log.dependencies import AbstractLoggingDependency  
 from django_abstract.registry import creator_selector
 

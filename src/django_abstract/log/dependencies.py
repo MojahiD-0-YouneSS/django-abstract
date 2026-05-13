@@ -1,4 +1,4 @@
-from django_abstract.base_dependency import BaseDependency,GLOBAL_REGISTRY
+from django_abstract.base.base_dependency import BaseDependency
 
 class AbstractLoggingDependency(BaseDependency):
     app_name='django_abstract_log'

@@ -1,6 +1,4 @@
-from django_abstract.log.services.creators_dependency import get_creator_manager
-
-LDM = get_creator_manager()
+from django_abstract.log.services.creators_dependency import get_log_dependency as LDM
 
 class SystemErrorLoggerUtility:
     """
@@ -61,7 +59,7 @@ class SystemErrorLoggerUtility:
 
     def log_it(self) -> dict[str,str]:
         data = self.to_dict()
-        LDM.create_system_error_log.model_class.objects.create(**data)
+        LDM().create_system_error_log.model_class.objects.create(**data)
         return data
 
 class SystemSuccessLoggerUtility:
@@ -154,7 +152,7 @@ class ErrorSuccessLogger:
         return logger.log_it()
 
 def log_event(event_type, action, user=None, metadata=None):
-    return LDM.create_log_event.model_class.objects.create(
+    return LDM().create_log_event.model_class.objects.create(
         user=user,
         event_type=event_type,
         action=action,

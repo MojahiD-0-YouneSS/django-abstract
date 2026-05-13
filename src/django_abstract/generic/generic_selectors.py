@@ -1,9 +1,7 @@
 from typing import Optional, List, Any, Union
 from django.db.models import Model, QuerySet
-# from django_abstract.base_selector import BaseSelector
 from django.apps import apps
 from datetime import datetime
-from abc import ABC
 from django_abstract.utilities import ClassInfoProvider
 
 class GenericSelector:
