@@ -4,10 +4,21 @@ from django_abstract.utilities import  ControlEntryData, ControlDataOperator, to
 from typing import Any
 
 class BaseAbstractOperator(ABC):
-    """
-    All guest operators must inherit this class.
+    """Abstract base class for all operators.
+    
+    Operators define the rules for who can access what services and under what conditions.
+
+    Attributes:
+        session_key (str, optional): The current session identifier.
+        domain (str, optional): The domain the operator belongs to.
     """
     def __init__(self, session_key=None,domain=None):
+        """Initialize the BaseAbstractOperator.
+
+        Args:
+            session_key (str, optional): The session identifier.
+            domain (str, optional): The operator domain.
+        """
         self.session_key = session_key
         self.domain=domain
     def run(self):
@@ -23,12 +34,24 @@ class BaseAbstractOperator(ABC):
         raise NotImplementedError
 
 class BaseOperator(BaseAbstractOperator):
-    """
-    All guest operators must inherit this class.
+    """Concrete base class for operator implementations.
+
+    Attributes:
+        allowed_services (list): Whitelist of service names this operator can invoke.
+        domain (str, optional): The domain context for the operator.
+        entry (ControlEntryData): The entry data tracking state and errors.
+        entry_operator (ControlDataOperator): The operator to mutate the entry data.
     """
     allowed_services = []
     domain=None
     def __init__(self, session_key=None, domain=None,entry=None):
+        """Initialize the BaseOperator.
+
+        Args:
+            session_key (str, optional): The session identifier.
+            domain (str, optional): The domain context.
+            entry (ControlEntryData, optional): The state tracking entry.
+        """
         self.entry = entry or ControlEntryData(
             operator=to_snake_case(self.__class__.__name__)
         )

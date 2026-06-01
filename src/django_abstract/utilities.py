@@ -15,6 +15,14 @@ from django.contrib.auth.mixins import AccessMixin
 from django.http import HttpResponseRedirect, HttpResponse
 
 def to_snake_case(name):
+    """Convert a CamelCase string to snake_case.
+
+    Args:
+        name (str): The string to convert.
+
+    Returns:
+        str: The snake_case string.
+    """
     # Insert underscore before capital letters (that are not at the start)
     # 1. Handle "XMLHttp" -> "XML_Http"
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
@@ -22,6 +30,7 @@ def to_snake_case(name):
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 class ClassInfoProvider:
+    """Provides metadata about the current class and method context."""
 
     def __init__(self):
         pass
@@ -60,7 +69,9 @@ class ClassInfoProvider:
 
 @dataclass
 class ServiceEntryData:
-    """to avoid random data layer manipulation only when actually pulled out"""
+    """Data structure to avoid random data layer manipulation.
+    Only allows access when actually pulled out.
+    """
     model_name:str =field(default_factory=str)
     obj_id:str=field(default_factory=str)
     service_data:dict=field(default_factory=dict)
@@ -94,6 +105,7 @@ class ServiceEntryData:
 
 
 class ServiceDataOperator:
+    """Operator to handle ServiceEntryData state modifications."""
     def __init__(self,entry:ServiceEntryData):
         super().__init__()
         self.entry:ServiceEntryData = entry
@@ -153,6 +165,7 @@ class ServiceDataOperator:
 
 @dataclass
 class EntryData:
+    """Metadata regarding an incoming entry (request, flow)."""
     ip_address: str=field(default_factory=str)
     user_agent: str=field(default_factory=str)
 
@@ -164,6 +177,7 @@ class EntryData:
     is_banned: bool = False
 
 class EntryDataOperator:
+    """Operator to manage EntryData logic."""
     def __init__(self,entry:EntryData):
         super().__init__()
         self.entry:EntryData = entry
@@ -187,6 +201,7 @@ class EntryDataOperator:
 
 @dataclass
 class ControlEntryData:
+    """Flow control data tracking service limits and state."""
     service_name: str=field(default_factory=str)      # Target Service
     service_domain: str=field(default_factory=str)      # Target Service
     operator: str = "default" # "add_item", "merge_cart"
@@ -217,6 +232,7 @@ class ControlDataOperator:
         return cls(ControlEntryData(service_name=service_name, service_domain=service_domain, operator=operator, flags=flags, related_flows=related_flows,))
 
 class EntryValidator:
+    """Validates the execution flow of an entry based on class permissions."""
     def __init__(self, entry, service_class):
         self.entry = entry
         self.service_class = service_class
@@ -259,6 +275,7 @@ class EntryValidator:
 
 @dataclass
 class RequestPathObjectMapper:
+    """Maps request paths and extracts URL data for entry context."""
     app: str=field(default_factory=str)
     
     list_url: list[str]=field(default_factory=list)
@@ -291,6 +308,7 @@ class RequestPathObjectMapper:
             return False
 
 class Entry(ClassInfoProvider):
+    """Master entry object that orchestrates data flow across the system."""
     def __init__(self, session_key=None,return_value=None,request=None):
         self.session_key = session_key
         self.return_value = return_value
@@ -459,6 +477,7 @@ def admin_or_staff(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 class AdminOrStaffMixin:
+    """Mixin to restrict view access to admin or staff members."""
 
     def __init__(self):
         super().__init__()
@@ -470,6 +489,7 @@ def admin_and_staff(user):
     return user.is_authenticated and (user.is_staff and user.is_superuser)
 
 class AdminAndStaffMixin:
+    """Mixin to restrict view access to users who are both admin and staff."""
 
     def __init__(self):
         super().__init__()

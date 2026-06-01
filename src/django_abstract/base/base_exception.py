@@ -2,6 +2,15 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 
 class CoreException(Exception):
+    """Custom core exception class for uniform error handling across the application.
+
+    Attributes:
+        message (str): The human-readable error message.
+        error_code (int or str, optional): A specific error code for the exception.
+        original_exception (Exception, optional): The underlying exception that caused this error.
+        context (dict): Additional context or payload associated with the error.
+        timestamp (datetime): UTC timestamp of when the exception occurred.
+    """
     def __init__(
         self,
         message:str="an error occurred in the application",

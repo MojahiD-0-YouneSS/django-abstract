@@ -4,9 +4,19 @@ from uuid import uuid4
 from django.conf import settings
 
 class BaseModel(models.Model):
-    """
-    An abstract base model with common fields for tracking creation, updates,
-    soft deletion, and additional metadata.
+    """An abstract base model with common fields for tracking creation, updates, soft deletion, and additional metadata.
+
+    Attributes:
+        id (UUIDField): Primary key, defaults to a generated UUID.
+        created_at (DateTimeField): Automatically set to the time of creation.
+        deactivated_at (DateTimeField): Time when the record was soft-deleted, null if active.
+        updated_at (DateTimeField): Automatically updated to the current time on save.
+        is_active (BooleanField): Indicates if the record is active. Defaults to True.
+        is_disabled (BooleanField): Indicates if the record is disabled. Defaults to False.
+        is_deactivated (BooleanField): Indicates if the record is deactivated. Defaults to False.
+        created_by (ForeignKey): Reference to the user who created the record.
+        updated_by (ForeignKey): Reference to the user who last updated the record.
+        deactivated_by (ForeignKey): Reference to the user who deactivated the record.
     """
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,16 +49,26 @@ class BaseModel(models.Model):
     )
 
     def soft_delete(self):
-        """
-        Soft delete the record by deactivating it and setting the `deactivated_at` timestamp.
+        """Soft delete the record by deactivating it and setting the `deactivated_at` timestamp.
+
+        Sets the `is_active` attribute to False and updates the `deactivated_at`
+        attribute to the current time. Saves the instance to the database.
+
+        Returns:
+            None
         """
         self.is_active = False
         self.deactivated_at = timezone.now()
         self.save()
 
     def reactivate(self):
-        """
-        Reactivate the record by setting it as active and clearing the `deactivated_at` timestamp.
+        """Reactivate the record by setting it as active and clearing the `deactivated_at` timestamp.
+
+        Sets the `is_active` attribute to True and resets the `deactivated_at`
+        attribute to None. Saves the instance to the database.
+
+        Returns:
+            None
         """
         self.is_active = True
         self.deactivated_at = None
@@ -56,8 +76,10 @@ class BaseModel(models.Model):
 
     @property
     def status(self):
-        """
-        Return a human-readable status for the object.
+        """Return a human-readable status for the object.
+
+        Returns:
+            str: "Active" if the record is active, otherwise "Deactivated".
         """
         return "Active" if self.is_active else "Deactivated"
 

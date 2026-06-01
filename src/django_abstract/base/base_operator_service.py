@@ -6,6 +6,16 @@ from django.utils import timezone
 from functools import partial
 
 class BaseOperatorService(ClassInfoProvider):
+    """Core service base class combining model dependencies, validation, and database operations.
+
+    Attributes:
+        model_dependency: The dependency injection container for models.
+        model_slug (str): Slug identifier for the model.
+        last_updated (datetime): Timestamp of the last bulk update.
+        hooks_list (list): List of allowed hooks.
+        operator_class (Type): Class used to instantiate the operator.
+        entry_class (Type): Class used to instantiate entry data.
+    """
     model_dependency= None
     model_slug = None
     last_updated = None
@@ -23,6 +33,17 @@ class BaseOperatorService(ClassInfoProvider):
         load_record=True,
         **db_required_fields,
     ):
+        """Initialize the BaseOperatorService.
+
+        Args:
+            session_key (str): The session identifier.
+            *args: Variable length argument list.
+            include_session (bool, optional): Whether to inject the session key into DB operations. Defaults to False.
+            include_session_key_as (str, optional): Custom field name for the session key.
+            auto_create (bool, optional): Whether to automatically create a record if not found. Defaults to False.
+            load_record (bool, optional): Whether to immediately load the record from the DB. Defaults to True.
+            **db_required_fields: Initial required fields for database lookup.
+        """
         db_required_fields.update(
             (
                 {

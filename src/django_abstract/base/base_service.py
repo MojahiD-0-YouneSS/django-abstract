@@ -8,9 +8,14 @@ from django_abstract.log.utilities import ErrorSuccessLogger
 from abc import ABC, abstractmethod
 
 class BaseService(ClassInfoProvider, ABC):
-    """
-    Pure Business Logic Layer.
+    """Pure Business Logic Layer.
     Mimics BaseOperatorService but operates entirely in-memory using ServiceEntryData.
+
+    Attributes:
+        hooks_list (list): List of allowed hooks.
+        entry_class (Type): Class used to instantiate entry data (default: ServiceEntryData).
+        operator_class (Type): Class used to instantiate the operator (default: ServiceDataOperator).
+        service_slug (str, optional): Unique slug identifying the service.
     """
 
     hooks_list = []
@@ -19,6 +24,12 @@ class BaseService(ClassInfoProvider, ABC):
     service_slug = None
 
     def __init__(self, session_key=None, **raw_data):
+        """Initialize the BaseService.
+
+        Args:
+            session_key (str, optional): The session identifier. Defaults to None.
+            **raw_data: Arbitrary initial data for the service.
+        """
         self.session_key = session_key
         self.validator = self.BaseServiceValidator
 
@@ -142,8 +153,14 @@ class BaseService(ClassInfoProvider, ABC):
         return flag
 
     def run(self, method_name, **kwargs):
-        """
-        Main execution wrapper for pure logic services.
+        """Main execution wrapper for pure logic services.
+
+        Args:
+            method_name (str): The name of the method to run.
+            **kwargs: Additional data to pass to the validator.
+
+        Returns:
+            ServiceEntryData or bool: The updated ServiceEntryData if successful, False otherwise.
         """
         kwargs["method_name"] = method_name
         validator = self.validator(self, **kwargs)
@@ -156,7 +173,14 @@ class BaseService(ClassInfoProvider, ABC):
         return success
 
     def hook(self, entry: ServiceEntryData = None):
-        """Allows this logic service to be triggered by other services."""
+        """Allows this logic service to be triggered by other services.
+
+        Args:
+            entry (ServiceEntryData, optional): The entry data to process. Defaults to None.
+
+        Returns:
+            ServiceEntryData or None: Result of the run, or None if it cannot run.
+        """
         entry = entry or self.entry
         service_data = entry.service_data
 

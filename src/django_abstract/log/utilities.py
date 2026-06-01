@@ -1,9 +1,19 @@
 from django_abstract.log.services.creators_dependency import get_log_dependency as LDM
 
 class SystemErrorLoggerUtility:
-    """
-    Utility class for handling system error logging.
+    """Utility class for handling system error logging.
     Encapsulates operations related to the SystemErrorLog model.
+
+    Attributes:
+        error_message (str): The error message.
+        service_name (str): The service name.
+        app_name (str): The app name.
+        method_name (str): The method name.
+        action (str): The action performed.
+        reported_by (str): The reporter or service identifier.
+        notes (str): Additional notes.
+        resolved (bool): Resolution status.
+        is_active (bool): Active status.
     """
     
     def __init__(self,
@@ -63,6 +73,18 @@ class SystemErrorLoggerUtility:
         return data
 
 class SystemSuccessLoggerUtility:
+    """Utility class for handling system success logging.
+
+    Attributes:
+        success_message (str): The success message.
+        service_name (str): The service name.
+        app_name (str): The app name.
+        method_name (str): The method name.
+        action (str): The action performed.
+        success_code (str): The success code.
+        reported_by (str): The reporter or service identifier.
+        created_by (str): The creator identifier.
+    """
 
     def __init__(self,
              success_message=None,

@@ -1,110 +1,61 @@
-#🏗️ Django Abstract
+<div align="center">
+  <h1>🛡️ Django Abstract</h1>
+  <p><strong>An Enterprise-Grade Architectural Layer for Django</strong></p>
+  <p>Clean Architecture | Dependency Injection | CQRS Principles | Domain-Driven Design</p>
+</div>
 
-Django Abstract provides the missing architectural layers for complex Django applications. It moves beyond the standard Model-View-Template (MVT) pattern by introducing Creators (Write Logic), Selectors (Read Logic), and Base Abstractions to keep your codebase clean, testable, and scalable.
+---
 
-#⚡ Why Use This?
+## 📖 Overview
 
-Standard Django is great, but "Fat Models" and "Fat Views" become unmaintainable in large projects. django-abstract solves this by enforcing separation of concerns:
+**Django Abstract** is a highly advanced framework built on top of Django that strictly enforces **Clean Architecture** and **Domain-Driven Design (DDD)**. It solves the infamous "Fat Model / Fat View" anti-pattern by completely decoupling:
 
-🧱 **Base Models**: Pre-configured UUIDs, timestamps, and soft-delete logic.
+1. **Data Access** (`Selectors` / `Creators`)
+2. **Business Logic** (`Services`)
+3. **Flow Control & Permissions** (`Operators` / `Systems`)
 
-⚙️ **Creator Layer**: A standardized way to handle business logic (Writes), decoupling it from Views/APIs.
+This framework provides a unified, predictable way to scale complex Django applications, manage high-throughput operations via Redis queues, and dynamically inject dependencies.
 
-🔍 **Selector Layer**: Optimized query logic (Reads) that prevents N+1 issues and leaking logic into templates.
+## 🚀 Key Features
 
-💉 **Dependency Injection**: A registry system (@creator_selector) to wire domains together without circular imports.
+### 🧩 Global Registry & Dependency Injection
+- Dynamically registers all architectural components using decorators (`@creator_selector`, `@register_service`, `@register_operator`).
+- Injects `BaseDependency` instances at runtime to prevent circular imports and allow test mocking.
+- Magic attribute resolution (`__getattr__`) allows developers to resolve dependencies seamlessly (`dependency.select_user`).
 
-#📦 Installation
-```bash
-pip install django-abstract
+### 🏛️ Strict Architectural Separation
+- **`BaseModel`**: Adds soft-delete, active toggles, and rich audit trails natively.
+- **`BaseSelector` / `BaseCreator`**: Isolates raw Django ORM calls from business logic.
+- **`BaseService`**: Pure business logic that operates exclusively on an abstract `ServiceEntryData` state.
+- **`BaseSystem`**: Orchestrates workflows and manages global database transactions (`transaction.atomic()`).
+
+### ⚡ High-Throughput Background Logging
+- Includes a robust `log/` app that tracks `SystemErrorLog`, `SessionMetrics`, and `AdminActionLog`.
+- Uses a **Redis-backed queueing system** within `ModelServices` to buffer high-frequency inserts and bulk-flush (`bulk_create`) them to PostgreSQL, completely preventing database locking during traffic spikes.
+
+### 🔌 Seamless View Binding
+- Replaces traditional Django Views with `EntryBindingMixin`.
+- Automatically extracts `session_key`, `ip_address`, and POST/GET payloads, hydrates a master `Entry` object, and passes it directly to the orchestration `Systems`.
+
+## 📁 Repository Structure
+
+```text
+src/django_abstract/
+├── base/        # Core architectural base classes
+├── generic/     # Generic, reusable creation/selection patterns
+├── log/         # High-performance asynchronous auditing system
+├── registry.py  # Global Dependency Injection container
+└── utilities.py # Context extraction, View Mixins, State Objects
 ```
 
-#🚀 Core Architecture
+## 📚 Documentation
+Comprehensive documentation for every module can be found in the `docs/` folder:
+- [Base Architecture Overview](docs/django_abstract/base)
+- [Generic Utilities](docs/django_abstract/generic)
+- [High-Performance Logging](docs/django_abstract/log)
 
-**1. The Base Model**
+## 🧪 Testing
+The repository is fully testable. Due to strict dependency injection, any `Selector` or `Creator` can be swapped out with a mock class during tests. Test stubs for all modules are located in the `tests/` directory.
 
-Stop repeating created_at and updated_at.
-```python
-from django_abstract.core.base_model import BaseModel
-
-class Product(BaseModel):
-    # Automatically gets:
-    # - id (UUID)
-    # - created_at / updated_at
-    # - is_active / is_deleted (Soft Delete)
-    name = models.CharField(max_length=255)
-```
-
-**2. The Creator Layer (Writer)**
-
-Encapsulate your data creation logic. creator take model class not raw requests or via decorator.
-```python
-from django_abstract.core.service import BaseCreator, CreatorException
-from .models import Order
-
-class OrderCreator(BaseService):
-    def __init__(self,*args,**kwargs):
-        super().__init__(Order)
-    def execute(self, user_status):
-        # 1. Validate Business Rules
-        if user_status == 'banned':
-            raise CreatorException("User banned") # CreatorException: unabel to create this entry . reason: User banned
-
-        # 2. Perform Atomic Transaction
-        with transaction.atomic():
-            order = self.model_class.objects.create(...)
-            # ... update inventory ...
-        return order
-```
-
-3. **The Selector Layer (Reads)**
-
-Keep your queries optimal and reusable.
-```python
-from django_abstract.core.selector import BaseSelector
-from .models import Product
-
-class ProductSelector(BaseSelector):
-    def __init__(self,):
-        super().__init__(Product)
-    def get_active_products(self,):
-        return self.model_class.objects.filter(is_active=True).select_related('category')
-````
-
-4. **The Registry Pattern**
-
-Automatically wire up your domains using the dependency registry.
-```python
-from django_abstract.core.registry import creator_selector
-from .dependencies import CartDependency
-
-@creator_selector(dependency=CartDependency) # -> makes a regestry of selector/creator classes but only if same structure
-class Cart(BaseModel):
-    # This model is now auto-registered with the Cart Domain
-    pass
-# were CartDependency
-'''
-from django_abstract.core.base_dependency import BaseDependency
-from dataclasses import dataclass
-
-@dataclass
-class CartDependency(BaseDependency):
-    """
-    CartAppDependency is a dataclass that serves as a container for the cart app's dependencies.
-    It inherits from BaseDependency, which provides a base structure for defining dependencies in the application.
-    """
-    name: str = "cart"
-    description: str = "Cart app dependency"
-```
-🛠️ **The "Guest Mode" Ecosystem**
-
-django-abstract includes a specialized system for handling unauthenticated user state (e.g., Guest Carts).
-
-Operators: Atomic command classes that oversees each app or sub apps (CartOperator (has all cart actioins), ProductOperator).
-
-Dispatcher: Routes requests based on user state (Anon vs. Auth).
-
-Middleware: Manages persistent guest sessions via cookies.
-
-
-📜 License MIT License - Copyright (c) 2025 Youness Mojahid
+## 👨‍💻 Author
+Designed and implemented as an enterprise architectural study to showcase advanced systems design, Python metaprogramming, and scalable Django architecture.

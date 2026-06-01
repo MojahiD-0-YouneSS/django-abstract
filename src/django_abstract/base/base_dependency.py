@@ -2,7 +2,20 @@ from django_abstract.registry import GLOBAL_REGISTRY, SELECTOR_REGISTRY, CREATOR
 
 
 class BaseDependency:
+    """Base class for managing and injecting dependencies like selectors and creators.
+
+    Attributes:
+        _registry (dict): The registry to pull dependencies from.
+        selectors (dict): Local mapping of selector dependencies.
+        creators (dict): Local mapping of creator dependencies.
+        model_class (Type[Model], optional): Associated model class.
+    """
     def __init__(self, registry=None):
+        """Initialize the BaseDependency.
+
+        Args:
+            registry (dict, optional): The global or domain-specific registry. Defaults to GLOBAL_REGISTRY.
+        """
         # Directly assign to __dict__ to avoid triggering __getattr__
         self._registry = registry or GLOBAL_REGISTRY
     def __init_subclass__(cls, **kwargs):

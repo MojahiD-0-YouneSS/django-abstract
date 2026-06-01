@@ -12,12 +12,14 @@ from django_abstract.log.models import (
 
 @register_selector(dependency=AbstractLoggingDependency)
 class SystemErrorLogSelector(BaseSelector):
+    """Selector for retrieving SystemErrorLog records."""
 
     def __init__(self,):
         super().__init__(SystemErrorLog)
 
 @register_selector(dependency=AbstractLoggingDependency)
 class FeatureToggleSelector(BaseSelector):
+    """Selector for retrieving FeatureToggle records."""
 
     def __init__(self,):
         super().__init__(FeatureToggle)

@@ -9,8 +9,14 @@ GLOBAL_REGISTRY = {}
 # GLOBAL_REGISTRY => {'app':dependency['selectors':{'name':class},'creators':{'name':class}]}
 
 def creator_selector(name=None, dependency=None,):
-    """
-    used in case registing from a model
+    """Decorator to register a model class, automatically generating and registering a BaseSelector and BaseCreator.
+
+    Args:
+        name (str, optional): Base name for the selector/creator. Defaults to None.
+        dependency (BaseDependency, optional): The dependency instance to attach to. Defaults to None.
+
+    Returns:
+        Callable: The wrapper function for the class.
     """
     from django_abstract.base.base_selector import BaseSelector
     from django_abstract.base.base_creator import BaseCreator
@@ -53,8 +59,14 @@ def creator_selector(name=None, dependency=None,):
 SELECTOR_REGISTRY = {}
 
 def register_selector(name=None, dependency=None):
-    """
-    used in case registing from a selector
+    """Decorator to register a selector class manually.
+
+    Args:
+        name (str, optional): Custom name for the selector. Defaults to None.
+        dependency (BaseDependency, optional): The dependency instance. Defaults to None.
+
+    Returns:
+        Callable: The wrapper function for the class.
     """
     def wrapper(cls):
         key = name or cls.__name__.replace("Selector", "").lower()
@@ -70,8 +82,14 @@ def register_selector(name=None, dependency=None):
 CREATOR_REGISTRY = {}
 
 def register_creator(name=None, dependency=None):
-    """
-    used in case registing from a creator
+    """Decorator to register a creator class manually.
+
+    Args:
+        name (str, optional): Custom name for the creator. Defaults to None.
+        dependency (BaseDependency, optional): The dependency instance. Defaults to None.
+
+    Returns:
+        Callable: The wrapper function for the class.
     """
     def wrapper(cls):
         key = name or cls.__name__.replace("Creator", "").lower()
@@ -98,8 +116,14 @@ SERVICE_REGISTRY = {
 
 
 def register_service(name=None, service_type=None):
-    """
-    used in case registing from a creator
+    """Decorator to register a service class (either MODEL_SERVICE or BARE_SERVICE).
+
+    Args:
+        name (str, optional): Custom name for the service. Defaults to None.
+        service_type (str, optional): Specific service type registry. Defaults to None.
+
+    Returns:
+        Callable: The wrapper function for the class.
     """
 
     from django_abstract.base.base_model_service import BaseModelService
@@ -126,6 +150,7 @@ GLOBAL_OPERATOR_REGISTRY = {}
 
 
 def register_operator():
+    """Decorator to register an operator class."""
     def wrapper(cls):
         if not cls.__name__ in OPERATOR_REGISTRY:
             OPERATOR_REGISTRY[to_snake_case(cls.__name__)] = cls
@@ -146,6 +171,7 @@ SYSTEM_REGISTRY = {
     'BARE_SYSTEM':{},
 }
 def register_system():
+    """Decorator to register a system class (either MODEL_SYSTEM or BARE_SYSTEM)."""
     def wrapper(cls):
         from django_abstract.base.base_model_system import BaseModelSystem
         # from django_abstract.base.base_system import BaseSystem
@@ -163,6 +189,7 @@ def register_system():
 
 
 def get_app_dependency(app_name:str):
+    """Retrieve the main dependency for an app."""
     return GLOBAL_REGISTRY.get(app_name)
 
 def get_app_select_dependency(app_name:str):

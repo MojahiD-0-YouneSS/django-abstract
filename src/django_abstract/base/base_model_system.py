@@ -8,16 +8,29 @@ logger = logging.getLogger(__name__)
 
 
 class BaseModelSystem(ABC):
-    """
-    Orchestration Layer for Database State Changes.
-    Coordinates multiple BaseModelServices.
-    ALWAYS wraps execution in a database transaction to ensure atomicity.
+    """Orchestration Layer for Database State Changes.
+    
+    Coordinates multiple BaseModelServices and always wraps execution in a database
+    transaction to ensure atomicity.
+
+    Attributes:
+        allowed_operators (list): Whitelist of operators this system is allowed to invoke.
+        request: The HTTP request object.
+        session_key (str): The session identifier.
+        entry (Entry): The context entry managing state.
     """
 
    
     allowed_operators = []
 
     def __init__(self, request=None, session_key=None, entry=None):
+        """Initialize the BaseModelSystem.
+
+        Args:
+            request (HttpRequest, optional): The HTTP request object. Defaults to None.
+            session_key (str, optional): The session identifier. Defaults to None.
+            entry (Entry, optional): An existing Entry context. Defaults to None.
+        """
         self.request = request
         self.session_key = session_key
 
@@ -32,9 +45,19 @@ class BaseModelSystem(ABC):
         pass
 
     def run(self, *args, **kwargs):
-        """
-        Standardized execution wrapper that ENFORCES transactional integrity.
-        If any BaseModelService fails inside .execute(), the entire DB state rolls back.
+        """Standardized execution wrapper that enforces transactional integrity.
+
+        If any execution inside `.execute()` fails, the entire database state rolls back.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            Any: The result of the `.execute()` method.
+            
+        Raises:
+            Exception: Re-raises the exception after handling failure.
         """
         try:
             with transaction.atomic():
@@ -50,9 +73,16 @@ class BaseModelSystem(ABC):
         target_method: str,
         payload: dict = None,
     ):
-        """
-        Dynamically fetches an operator from the registry, validates permissions,
-        and asks it to dispatch the action.
+        """Dynamically fetches an operator from the registry, validates permissions, and asks it to dispatch the action.
+
+        Args:
+            operator_name (str): The name of the operator to invoke.
+            target_service (str): The target service for the operator.
+            target_method (str): The target method on the service.
+            payload (dict, optional): The data payload to pass. Defaults to None.
+
+        Returns:
+            bool: True if dispatched successfully, False if blocked or operator not found.
         """
         # 1. System-level whitelist validation
         if operator_name not in self.allowed_operators:

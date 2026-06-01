@@ -2,7 +2,11 @@ from django_abstract.base.base_dependency import BaseCreateDependency
 
 
 class AbstractLogSelectDependency(BaseCreateDependency):
-    """dependency grouping for logging selectors"""
+    """Dependency grouping for logging selectors.
+
+    Attributes:
+        app_name (str): The name of the application.
+    """
     app_name = 'django_abstracr_log'
 
 

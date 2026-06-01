@@ -13,10 +13,13 @@ from django_abstract.log.dependencies import AbstractLoggingDependency
 
 @register_service()
 class ErrorLogModelService(BaseModelService):
-    """
-    Built-in Framework Service for managing SystemErrorLog.
+    """Built-in Framework Service for managing SystemErrorLog.
     Handles high-throughput logging by caching logs in Redis
     and flushing to the DB in bulk.
+
+    Attributes:
+        model_dependency (AbstractLoggingDependency): Dependency injection for the log model.
+        model_slug (str): Slug identifier for the model.
     """
 
     model_dependency = AbstractLoggingDependency()
@@ -162,9 +165,12 @@ class SystemErrorLogModelService(BaseModelService):
 
 @register_service()
 class SessionMetricsModelService(BaseModelService):
-    """
-    Tracks session durations and path hits.
+    """Tracks session durations and path hits.
     Crucial for analytics, but highly cached to prevent DB blocking.
+
+    Attributes:
+        model_dependency (AbstractLoggingDependency): Dependency injection for the log model.
+        model_slug (str): Slug identifier for the model.
     """
 
     model_dependency = AbstractLoggingDependency()

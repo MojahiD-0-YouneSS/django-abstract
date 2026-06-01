@@ -7,9 +7,24 @@ from django_abstract.registry import creator_selector
 
 @creator_selector(dependency=AbstractLoggingDependency)
 class SystemErrorLog(BaseModel):
-    """
-    Universal Error Log.
+    """Universal Error Log.
     Captures stack traces and error details from ANY app.
+
+    Attributes:
+        error_code (str, optional): A specific error code for the exception.
+        error_message (str): The human-readable error message.
+        stack_trace (str): The stack trace of the error.
+        service_name (str): The name of the service where the error occurred.
+        app_name (str): The name of the app where the error occurred.
+        method_name (str, optional): The name of the method where the error occurred.
+        service_function_name (str): The name of the function where the error occurred.
+        action (str): The action that caused the error.
+        environment (str): The environment where the error occurred.
+        severity (str): The severity of the error.
+        reported_by (str, optional): The user who reported the error.
+        resolved (bool): Indicates if the error has been resolved.
+        resolved_at (datetime, optional): Time when the error was resolved.
+        notes (str, optional): Additional notes regarding the error.
     """
     SEVERITY_CHOICES = [
         ('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')
@@ -46,9 +61,14 @@ class SystemErrorLog(BaseModel):
 
 @creator_selector(dependency=AbstractLoggingDependency)
 class FeatureToggle(BaseModel):
-    """
-    Universal Feature Flag system.
+    """Universal Feature Flag system.
     Useful for any app to turn features on/off without deployment.
+
+    Attributes:
+        feature_name (str): The unique name of the feature.
+        description (str, optional): Description of the feature.
+        is_enabled (bool): Whether the feature is active.
+        toggle_type (str): Type of toggle (global, user, group).
     """
     feature_name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
@@ -65,9 +85,17 @@ class FeatureToggle(BaseModel):
 
 @creator_selector(dependency=AbstractLoggingDependency)
 class AdminActionLog(BaseModel):
-    """
-    Generic Audit Log for Admin actions.
-    Uses Generic Foreign Key logic conceptually (object_id/type) to link to anything.
+    """Generic Audit Log for Admin actions.
+    Uses Generic Foreign Key logic conceptually to link to anything.
+
+    Attributes:
+        admin (ForeignKey): Reference to the admin user who performed the action.
+        action_type (str): Type of action performed (e.g., Update, Delete).
+        action_description (str): Detailed description of the action.
+        related_object_type (str): The type of object affected.
+        related_object_id (str): The ID of the affected object.
+        status (str): Outcome status (success or failure).
+        performed_at (datetime): Timestamp of the action.
     """
     admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     action_type = models.CharField(max_length=100)  # e.g., "Update", "Delete"

@@ -3,6 +3,10 @@ from django.utils.module_loading import autodiscover_modules
 
 
 class CoreConfig(AppConfig):
+    """Django application configuration for django_abstract.
+
+    Handles initialization and autodiscovery of core modules (services, operators, systems, dependencies, models, selectors) across installed apps.
+    """
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'django_abstract'
     # Human readable name for the Admin panel

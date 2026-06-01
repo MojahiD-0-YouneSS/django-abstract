@@ -5,26 +5,33 @@ from datetime import datetime
 from django_abstract.utilities import ClassInfoProvider
 
 class GenericSelector:
-    def __init__(self, model_rep: str = None,is_model=True):
-        """
-        A generic selector for Django model fields
+    """A generic selector for Django model fields.
+
+    Attributes:
+        model_str_rep (str): String representation of the model.
+        model (Model): The target Django model class.
+        creator_info (dict): Resolved class information for the selector.
+    """
+    def __init__(self, model_rep: str = None, is_model=True):
+        """Initialize the GenericSelector.
+
         Args:
-            dependency: Related model for lookups
-            model: Target model for selection
+            model_rep (str, optional): Target model class or string representation. Defaults to None.
+            is_model (bool, optional): True if model_rep is a model class, False if string. Defaults to True.
         """
         self.model_str_rep = str(model_rep)
         self.model:Optional[Model] = model_rep if is_model else apps.get_model(self.model_str_rep)
         self.creator_info = ClassInfoProvider.resolve_class_info(obj=self)
 
     def ids(self, is_list: bool = False, value: Optional[int] = None) -> Union[Optional[int], QuerySet]:
-        """
-        Get ID(s) based on conditions
+        """Get ID(s) based on conditions.
+
         Args:
-            is_list: Return a queryset if True
-            is_model: Return a queryset if True
-            value: Specific ID to lookup
+            is_list (bool, optional): If True, returns a flat queryset of all IDs. Defaults to False.
+            value (int, optional): Specific ID to lookup if is_list is False. Defaults to None.
+
         Returns:
-            Single ID or queryset of IDs
+            Union[Optional[int], QuerySet]: Single instance or queryset of IDs.
         """
         try:
             if  is_list:
@@ -34,14 +41,14 @@ class GenericSelector:
         except :
             pass
 
-    def created_at(self, date_value: Optional[datetime] = None,) -> Union[Optional[QuerySet], Any]:
-        """
-        Get created_at timestamps
+    def created_at(self, date_value: Optional[datetime] = None) -> Union[Optional[QuerySet], Any]:
+        """Get records by created_at timestamps.
+
         Args:
-            date_value: Optional date filter (e.g., 'today', 'week')
-            is_model: Return a queryset if True
+            date_value (datetime, optional): Optional date filter. Defaults to None.
+
         Returns:
-            Filtered queryset or specific timestamp
+            Union[Optional[QuerySet], Any]: Filtered queryset or specific timestamp.
         """
         try:
             if date_value and self.model:
