@@ -92,7 +92,7 @@ def register_abstract_view(url_name, bind_func):
     return None
 
 SERVICE_REGISTRY = {
-    "Model_SERVICE":{},
+    "MODEL_SERVICE":{},
     "BARE_SERVICE":{}
 }
 
@@ -110,11 +110,11 @@ def register_service(name=None, service_type=None):
 
         if not resolved_type:
             if issubclass(cls,BaseModelService):
-                resolved_type='Model_SERVICE'
+                resolved_type = "MODEL_SERVICE"
             else:
                 resolved_type='BARE_SERVICE'
 
-        key = name or to_snake_case(cls.__name__.lower())
+        key = name or to_snake_case(cls.__name__)
         SERVICE_REGISTRY[resolved_type][key]=cls
         return cls
 
@@ -128,14 +128,14 @@ GLOBAL_OPERATOR_REGISTRY = {}
 def register_operator():
     def wrapper(cls):
         if not cls.__name__ in OPERATOR_REGISTRY:
-            OPERATOR_REGISTRY[cls.__name__]=cls
+            OPERATOR_REGISTRY[to_snake_case(cls.__name__)] = cls
         if hasattr(cls, 'app_name'):
-            if not cls.app_name not in GLOBAL_OPERATOR_REGISTRY:
+            if cls.app_name not in GLOBAL_OPERATOR_REGISTRY:
                 GLOBAL_OPERATOR_REGISTRY[cls.app_name]={}
-                GLOBAL_OPERATOR_REGISTRY[cls.app_name][cls.__name__]=cls
+                GLOBAL_OPERATOR_REGISTRY[cls.app_name][to_snake_case(cls.__name__)]=cls
             else:
-                GLOBAL_OPERATOR_REGISTRY[cls.app_name][cls.__name__]=cls
-            
+                GLOBAL_OPERATOR_REGISTRY[cls.app_name][to_snake_case(cls.__name__)]=cls
+
         return cls
 
     return wrapper
@@ -147,16 +147,16 @@ SYSTEM_REGISTRY = {
 }
 def register_system():
     def wrapper(cls):
-        from django_abstract.systems.model_system import BaseModelSystem
-        from django_abstract.systems.system import BaseSystem
-        
+        from django_abstract.base.base_model_system import BaseModelSystem
+        # from django_abstract.base.base_system import BaseSystem
+
         if issubclass(cls,BaseModelSystem):
-            
+
             resolved_type = 'MODEL_SYSTEM'
         else:
             resolved_type = 'BARE_SYSTEM'
-            
-        SYSTEM_REGISTRY[resolved_type][cls.__name__]=cls
+
+        SYSTEM_REGISTRY[resolved_type][to_snake_case(cls.__name__)] = cls
         return cls
 
     return wrapper
@@ -175,8 +175,8 @@ def get_abstract_view(app_name:str):
     return ABSTRACT_VIEW_REGISTRY.get(app_name)
 
 def get_service(service_name:str):
-    if service_name in SERVICE_REGISTRY["Model_SERVICE"].keys():
-        return SERVICE_REGISTRY["Model_SERVICE"].get(service_name)
+    if service_name in SERVICE_REGISTRY["MODEL_SERVICE"].keys():
+        return SERVICE_REGISTRY["MODEL_SERVICE"].get(service_name)
     else:
         return SERVICE_REGISTRY["BARE_SERVICE"].get(service_name)
 

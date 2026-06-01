@@ -13,4 +13,4 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         # This is where you import signals to ensure they are registered
-        autodiscover_modules("services", "operators", "systems", "dependencies")
+        autodiscover_modules("services", "operators", "systems", "dependencies",'models','selectors')

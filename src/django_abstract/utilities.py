@@ -11,7 +11,8 @@ from datetime import datetime, date
 from typing import Dict, List, Any, Optional
 from django.db import models
 import re
-from types import SimpleNamespace
+from django.contrib.auth.mixins import AccessMixin
+from django.http import HttpResponseRedirect, HttpResponse
 
 def to_snake_case(name):
     # Insert underscore before capital letters (that are not at the start)
@@ -191,6 +192,8 @@ class ControlEntryData:
     operator: str = "default" # "add_item", "merge_cart"
     flags: Dict[str, bool] = field(default_factory=dict) # {skip_validation: True}
     related_flows: Dict[str,str] = field(default_factory=dict) # {"email:trigger_email", "inventory:update_inventory"}
+    errors: Dict[str,Any] = field(default_factory=dict) 
+    service_args: Dict[str,Any] = field(default_factory=dict) 
     actor_id: Optional[str] = None
     actor_role: str = "guest"
 
@@ -288,19 +291,20 @@ class RequestPathObjectMapper:
             return False
 
 class Entry(ClassInfoProvider):
-    def __init__(self, session_key=None,return_value=None):
+    def __init__(self, session_key=None,return_value=None,request=None):
         self.session_key = session_key
         self.return_value = return_value
+        self.request = request
         self.help_data = {}
         self.entry_data: EntryData=EntryData()
         self.control_entry_data: ControlEntryData=ControlEntryData()
         self.service_entry_data: ServiceEntryData=ServiceEntryData()
         self.is_modified=False
-        self.request_path_object_mapper: RequestPathObjectMapper = field(default_factory=RequestPathObjectMapper)
+        self.request_path_object_mapper: RequestPathObjectMapper = RequestPathObjectMapper()
         self.context_operator:EntryDataOperator=self.op_entry_data
         self.payload_operator:ServiceDataOperator=self.op_service_entry_data
         self.control_operator:ControlDataOperator=self.op_control_entry_data
-
+        self.errors: Dict[str,Any] = {}
         self.system_infos = self.get_class_info()
         super().__init__()
 
@@ -460,6 +464,17 @@ class AdminOrStaffMixin:
         super().__init__()
 
     @method_decorator(user_passes_test(admin_or_staff))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+def admin_and_staff(user):
+    return user.is_authenticated and (user.is_staff and user.is_superuser)
+
+class AdminAndStaffMixin:
+
+    def __init__(self):
+        super().__init__()
+
+    @method_decorator(user_passes_test(admin_and_staff))
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
@@ -678,3 +693,23 @@ class ExtractRequestDataUtilities:
         entry.service_entry_data.raw_data = rpom.args
 
         return entry
+
+class HtmxLoginRequiredMixin(AccessMixin):
+    """
+    Verify that the current user is authenticated.
+    If not, natively redirect them, supporting HTMX HX-Redirect.
+    """
+
+    def handle_no_permission(self):
+        # This is where Django usually sends the user to the login page
+        url = self.get_login_url()
+
+        # Check if the request was made by HTMX
+        if self.request.headers.get("HX-Request") == "true":
+            # Tell HTMX to force the browser to navigate
+            response = HttpResponse(status=200)
+            response["HX-Redirect"] = url
+            return response
+
+        # If it's a normal browser request, do the native Django 302 redirect
+        return HttpResponseRedirect(url)

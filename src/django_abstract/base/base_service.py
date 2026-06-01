@@ -43,6 +43,7 @@ class BaseService(ClassInfoProvider, ABC):
             self.data = data
             self.cross_domain_data = {}
             self.is_cross_domain = False
+            self.target_method=None
             self.behavior = ServiceEntryData()
             self.meta_hook()
             self.run_service_check()
@@ -55,11 +56,10 @@ class BaseService(ClassInfoProvider, ABC):
             return self
 
         def can_run(self, *required_fields: str, dry_run=False, **data) -> bool:
-            fields = (
-                required_fields
-                if required_fields
-                else self.SERVICE_DOMAIN_FIELDS
-            )
+            fields = required_fields
+            #     if required_fields
+            #     else self.SERVICE_DOMAIN_FIELDS
+            # )
             raw_data = data if data else self.data
 
             if fields:
@@ -76,18 +76,20 @@ class BaseService(ClassInfoProvider, ABC):
         @abstractmethod
         def meta_hook(self):
             """Lifecycle hook: Must be overridden in subclasses to build registries."""
-            pass
+            raise NotImplementedError("Subclasses must implement the meta_hook method to register logic methods.")
 
         def run_service_check(self, *required_fields, **data):
-            raw_data = (data or self.data).copy()
+            raw_data = (data or self.data)
             if self.is_cross_domain:
                 raw_data.update(self.cross_domain_data)
 
             method_name = raw_data.get("method_name")
+            self.target_method=method_name
             if method_name:
                 method_required_fields = self.VALID_FIELDS_PER_ACTION.get(
                     method_name, []
                 )
+
                 check = self.can_run(
                     *method_required_fields,
                     **{k: v for k, v in raw_data.items() if k != "method_name"},
@@ -106,8 +108,10 @@ class BaseService(ClassInfoProvider, ABC):
             self.METHOD_COLLECTION[name] = method
             return self
 
-        def get_method_args(self, method_name):
+        def get_method_args(self, method_name, keys=False):
             valid_fields = self.VALID_FIELDS_PER_ACTION.get(method_name, [])
+            if keys:
+                return valid_fields
             valid_domain_fields = self.run_service_check(*valid_fields)
 
             if self.is_cross_domain:
@@ -131,7 +135,7 @@ class BaseService(ClassInfoProvider, ABC):
     def can_run(self, method_name, **kwargs) -> bool:
         kwargs["method_name"] = method_name
         validator = self.validator(self, **kwargs)
-        required_fields = validator.VALID_FIELDS_PER_ACTION.get(method_name, [])
+        required_fields = validator.get_method_args(method_name,keys=True)
         flag = validator.can_run(*required_fields)
         if flag:
             self.entry.service_data = validator.behavior.service_data
@@ -148,13 +152,13 @@ class BaseService(ClassInfoProvider, ABC):
         if success:
             # Transfer computed result back to the main service state
             self.entry.service_data.update(validator.behavior.service_data)
-
+            return self.entry
         return success
 
     def hook(self, entry: ServiceEntryData = None):
         """Allows this logic service to be triggered by other services."""
         entry = entry or self.entry
-        service_data = entry.service_data.copy()
+        service_data = entry.service_data
 
         # Automatically pull method_name if passed via service_data
         method_name = service_data.get("method_name")
@@ -168,21 +172,17 @@ class BaseService(ClassInfoProvider, ABC):
     ):
         """Passes the ServiceEntryData along to Model Services or other Pure Services"""
         service_type = service_type or "MODEL_SERVICE"
-        from django_abstract.registry import SERVICE_REGISTRY
+        from django_abstract.registry import get_service
+        service_args = entry.service_data.get("service_args") 
 
-        targets = hook_names if hook_names else self.hooks_list
-
-        for name in targets:
-            if hook_names and name not in self.hooks_list:
+        for name in hook_names:
+            if name and name not in self.hooks_list:
                 continue
 
-            target_service = SERVICE_REGISTRY.get(service_type, {}).get(name)
-            if not target_service:
-                target_service = SERVICE_REGISTRY.get("BARE_SERVICE", {}).get(name)
-
+            target_service = get_service(name)
             if target_service and hasattr(target_service, "hook"):
                 # Passes the SED directly, keeping 100% compatibility with Model Services
-                target_service.hook(entry=entry or self.entry)
+                target_service(**service_args).hook(entry=(entry or self.entry))
         return True
 
     def logging_hook(self, operation, e=None, **kwargs):

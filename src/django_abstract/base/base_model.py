@@ -30,8 +30,13 @@ class BaseModel(models.Model):
         null=True,
         blank=True
     )
-    deactivated_by = models.CharField(max_length=250, null=True, blank=True)
-
+    deactivated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="%(class)s_deactivated_by",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     def soft_delete(self):
         """
@@ -41,7 +46,6 @@ class BaseModel(models.Model):
         self.deactivated_at = timezone.now()
         self.save()
 
-
     def reactivate(self):
         """
         Reactivate the record by setting it as active and clearing the `deactivated_at` timestamp.
@@ -49,7 +53,6 @@ class BaseModel(models.Model):
         self.is_active = True
         self.deactivated_at = None
         self.save()
-
 
     @property
     def status(self):
@@ -62,4 +65,3 @@ class BaseModel(models.Model):
         abstract = True  # Ensure this model is abstract
         ordering = ['-created_at']  # Default ordering by creation date descending
         get_latest_by = 'created_at'  # Default latest field for queries
-

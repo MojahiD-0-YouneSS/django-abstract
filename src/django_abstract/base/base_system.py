@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from django_abstract.utilities import Entry
-from django_abstract.registry import OPERATOR_REGISTRY
+from django_abstract.registry import get_operator
 
 class BaseSystem(ABC):
     """
@@ -15,13 +15,15 @@ class BaseSystem(ABC):
     """
 
     # Whitelist: Which operators is this system allowed to invoke?
-    allowed_operators = []
+    ALLOWED_OPERATORS = []
+    SYSTEM_SLUG = "base_system"
 
     def __init__(self, request=None, session_key=None, entry=None):
         self.request = request
         self.session_key = session_key
-
-        self.entry = entry or Entry(session_key=self.session_key)
+        self.allowed_operators = self.ALLOWED_OPERATORS
+        self.system_slug = self.SYSTEM_SLUG
+        self.entry:Entry = entry or Entry(session_key=self.session_key, request=self.request)
 
     @abstractmethod
     def execute(self, *args, **kwargs):
@@ -29,7 +31,7 @@ class BaseSystem(ABC):
         The main entry point for the system.
         Must be implemented by subclasses.
         """
-        pass
+        raise NotImplementedError()
 
     def invoke_operator(
         self,
@@ -47,22 +49,23 @@ class BaseSystem(ABC):
             self.entry.errors["system"] = (
                 f"System blocked: Cannot invoke operator '{operator_name}'."
             )
+
             return False
 
         # 2. Fetch from Registry
-        OperatorClass = OPERATOR_REGISTRY.get(operator_name)
+        OperatorClass = get_operator(operator_name)
         if not OperatorClass:
-            self.entry.errors["system"] = (
+            self.entry.service_entry_data.errors["system"] = (
                 f"Operator '{operator_name}' not found in OPERATOR_REGISTRY."
             )
             return False
 
         # 3. Instantiate the Operator (Passing the Master Entry)
         # The Operator will internally focus on the ControlEntryData
-        operator_instance = OperatorClass(entry=self.entry)
 
+        operator_instance = OperatorClass(entry=self.entry.control_entry_data)
         # 4. Dispatch!
-        return operator_instance.dispatch(
+        return operator_instance.run(
             target_service_name=target_service,
             target_method=target_method,
             payload=payload,

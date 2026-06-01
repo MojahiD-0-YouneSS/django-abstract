@@ -59,7 +59,7 @@ class SystemErrorLoggerUtility:
 
     def log_it(self) -> dict[str,str]:
         data = self.to_dict()
-        LDM().create_system_error_log.model_class.objects.create(**data)
+        # LDM().create_system_error_log.model_class.objects.create(**data)
         return data
 
 class SystemSuccessLoggerUtility:
