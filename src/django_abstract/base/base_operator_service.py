@@ -276,13 +276,14 @@ class BaseOperatorService(ClassInfoProvider):
                 # Only save every 5 seconds or when explicitly flushed
                 if (self.last_updated - getattr(self, '_last_save', timezone.now())).seconds >= 5:
                     self.operator.flush_updates(pending_updates=self.operator.pending_updates)
-                    self.db_record.bulk_update(self.entry.service_data)
-                    self.db_record.save()
+                    for field, value in self.entry.service_data.items():
+                        if hasattr(self.db_record, field):
+                            setattr(self.db_record, field, value)
                 self.entry.load_obj_data(self.db_record)
                 return self.entry
         self.entry.errors['record_exists']=False
         return self.entry
-
+                            
     def read_entry(self,skip_validation=False, **kwargs):
 
         if not skip_validation:

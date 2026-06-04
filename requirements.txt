@@ -1,0 +1,4 @@
+# pytest-django
+# django
+# pytest
+# whitenoise
